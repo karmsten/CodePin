@@ -9,27 +9,50 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "*"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "codepin.createTask",
-        "title": "CodePin: Create Task"
+        "title": "CodePin: Create Task",
+        "category": "CodePin"
       },
       {
         "command": "codepin.deleteTask",
-        "title": "CodePin: Delete Task"
+        "title": "CodePin: Delete Task",
+        "category": "CodePin"
       },
       {
         "command": "codepin.updateTask",
-        "title": "CodePin: Update Task"
+        "title": "CodePin: Update Task",
+        "category": "CodePin"
       },
       {
         "command": "codepin.showAllTasks",
-        "title": "CodePin: Show All Tasks"
+        "title": "CodePin: Show All Tasks",
+        "category": "CodePin"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codepin-sidebar",
+          "title": "CodePin",
+          "icon": "resources/codepin.svg"
+        }
+      ]
+    },
+    "views": {
+      "codepin-sidebar": [
+        {
+          "id": "codepinTasks",
+          "name": "Tasks"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
