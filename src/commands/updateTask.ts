@@ -3,20 +3,30 @@ import { saveTasks, getTasks } from "../utils/taskStorage";
 import { updateDecorations } from "../utils/decorations";
 import { Task } from "../types";
 
-export async function updateTask(context: vscode.ExtensionContext) {
+export async function updateTask(
+  context: vscode.ExtensionContext,
+  taskToUpdate?: Task
+) {
   const tasks = getTasks(context);
-  const taskToUpdate = await vscode.window.showQuickPick(
-    tasks.map((task) => `${task.description} (${task.priority})`),
-    { placeHolder: "Select task to update" }
-  );
+
+  if (!taskToUpdate) {
+    const taskToUpdateString = await vscode.window.showQuickPick(
+      tasks.map((task) => `${task.description} (${task.priority})`),
+      { placeHolder: "Select task to update" }
+    );
+
+    if (taskToUpdateString) {
+      taskToUpdate = tasks.find(
+        (task) =>
+          `${task.description} (${task.priority})` === taskToUpdateString
+      );
+    }
+  }
 
   if (taskToUpdate) {
-    const index = tasks.findIndex(
-      (task) => `${task.description} (${task.priority})` === taskToUpdate
-    );
+    const index = tasks.findIndex((t) => t.id === taskToUpdate.id);
     if (index !== -1) {
-      const task = tasks[index];
-      const updatedTask = await getUpdatedTaskDetails(task);
+      const updatedTask = await getUpdatedTaskDetails(taskToUpdate);
       if (updatedTask) {
         tasks[index] = updatedTask;
         saveTasks(context, tasks);

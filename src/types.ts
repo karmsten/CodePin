@@ -5,4 +5,5 @@ export interface Task {
   priority: "low" | "medium" | "high";
   filePath: string;
   lineNumber: number;
+  notes: string;
 }

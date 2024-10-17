@@ -26,6 +26,7 @@ export async function createTask(context: vscode.ExtensionContext) {
         assignee,
         filePath: editor.document.uri.fsPath,
         lineNumber: position.line,
+        notes: "",
       };
 
       const tasks = getTasks(context);

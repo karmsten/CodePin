@@ -34,8 +34,21 @@
         "command": "codepin.showAllTasks",
         "title": "CodePin: Show All Tasks",
         "category": "CodePin"
+      },
+      {
+        "command": "codepin.editTaskNotes",
+        "title": "CodePin: Edit Task Notes",
+        "category": "CodePin"
       }
     ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "codepin.editTaskNotes",
+          "when": "view == codepinTasks && viewItem == taskNotes"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {

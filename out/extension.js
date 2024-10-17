@@ -64,7 +64,24 @@ function activate(context) {
             });
         }
     });
-    context.subscriptions.push(createTaskDisposable, deleteTaskDisposable, updateTaskDisposable, showAllTasksDisposable, jumpToTaskDisposable);
+    let editTaskNotesDisposable = vscode.commands.registerCommand("codepin.editTaskNotes", async (task) => {
+        const newNotes = await vscode.window.showInputBox({
+            prompt: "Edit task notes",
+            value: task.notes,
+            placeHolder: "Enter notes for this task",
+        });
+        if (newNotes !== undefined) {
+            task.notes = newNotes;
+            const tasks = (0, taskStorage_1.getTasks)(context);
+            const index = tasks.findIndex((t) => t.id === task.id);
+            if (index !== -1) {
+                tasks[index] = task;
+                (0, taskStorage_1.saveTasks)(context, tasks);
+                taskTreeDataProvider.refresh();
+            }
+        }
+    });
+    context.subscriptions.push(createTaskDisposable, deleteTaskDisposable, updateTaskDisposable, showAllTasksDisposable, jumpToTaskDisposable, editTaskNotesDisposable);
     // Register CodeLens provider
     let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ scheme: "file", language: "*" }, new CodePinCodeLensProvider(context));
     context.subscriptions.push(codeLensProviderDisposable);

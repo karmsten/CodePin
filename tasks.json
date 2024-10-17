@@ -13,6 +13,15 @@
     "priority": "medium",
     "assignee": "fredrik",
     "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Home.tsx",
-    "lineNumber": 25
+    "lineNumber": 25,
+    "notes": "hej hopp san sa tjollala jag måste pissa och jag är en liten parvel med ett stort jävla jehu "
+  },
+  {
+    "id": "1729187069754",
+    "description": "skrrt skrrt",
+    "priority": "low",
+    "assignee": "",
+    "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Home.tsx",
+    "lineNumber": 17
   }
 ]

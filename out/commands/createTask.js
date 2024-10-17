@@ -46,6 +46,7 @@ async function createTask(context) {
                 assignee,
                 filePath: editor.document.uri.fsPath,
                 lineNumber: position.line,
+                notes: "",
             };
             const tasks = (0, taskStorage_1.getTasks)(context);
             tasks.push(task);

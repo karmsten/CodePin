@@ -2,14 +2,26 @@ import * as vscode from "vscode";
 import { Task } from "./types";
 import { getTasks } from "./utils/taskStorage";
 
+class AssigneeTreeItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState
+  ) {
+    super(label, collapsibleState);
+  }
+}
+
 export class TaskTreeDataProvider
-  implements vscode.TreeDataProvider<TaskTreeItem>
+  implements
+    vscode.TreeDataProvider<AssigneeTreeItem | TaskTreeItem | TaskNotesItem>
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
-    TaskTreeItem | undefined | null | void
-  > = new vscode.EventEmitter<TaskTreeItem | undefined | null | void>();
+    AssigneeTreeItem | TaskTreeItem | TaskNotesItem | undefined | null | void
+  > = new vscode.EventEmitter<
+    AssigneeTreeItem | TaskTreeItem | TaskNotesItem | undefined | null | void
+  >();
   readonly onDidChangeTreeData: vscode.Event<
-    TaskTreeItem | undefined | null | void
+    AssigneeTreeItem | TaskTreeItem | TaskNotesItem | undefined | null | void
   > = this._onDidChangeTreeData.event;
 
   constructor(private context: vscode.ExtensionContext) {}
@@ -18,47 +30,61 @@ export class TaskTreeDataProvider
     this._onDidChangeTreeData.fire();
   }
 
-  getTreeItem(element: TaskTreeItem): vscode.TreeItem {
+  getTreeItem(
+    element: AssigneeTreeItem | TaskTreeItem | TaskNotesItem
+  ): vscode.TreeItem {
     return element;
   }
 
-  getChildren(element?: TaskTreeItem): Thenable<TaskTreeItem[]> {
-    if (element) {
-      return Promise.resolve([]);
+  getChildren(
+    element?: AssigneeTreeItem | TaskTreeItem | TaskNotesItem
+  ): Thenable<(AssigneeTreeItem | TaskTreeItem | TaskNotesItem)[]> {
+    if (!element) {
+      return Promise.resolve(this.getAssignees());
+    } else if (element instanceof AssigneeTreeItem) {
+      return Promise.resolve(this.getTasksForAssignee(element.label));
+    } else if (element instanceof TaskTreeItem) {
+      return Promise.resolve([new TaskNotesItem(element.task)]);
     } else {
-      const tasks = getTasks(this.context);
-      return Promise.resolve(this.getTasks(tasks));
+      return Promise.resolve([]);
     }
   }
 
-  private getTasks(tasks: Task[]): TaskTreeItem[] {
-    return tasks.map(
-      (task) =>
-        new TaskTreeItem(
-          task.description,
-          task.priority,
-          vscode.TreeItemCollapsibleState.None,
-          {
-            command: "codepin.jumpToTask",
-            title: "Jump to Task",
-            arguments: [task.id],
-          }
+  private getAssignees(): AssigneeTreeItem[] {
+    const tasks = getTasks(this.context);
+    const assignees = new Set(
+      tasks.map((task) => task.assignee || "Unassigned")
+    );
+    return Array.from(assignees).map(
+      (assignee) =>
+        new AssigneeTreeItem(
+          assignee,
+          vscode.TreeItemCollapsibleState.Collapsed
         )
     );
+  }
+
+  private getTasksForAssignee(assignee: string): TaskTreeItem[] {
+    const tasks = getTasks(this.context);
+    return tasks
+      .filter((task) => (task.assignee || "Unassigned") === assignee)
+      .map(
+        (task) =>
+          new TaskTreeItem(task, vscode.TreeItemCollapsibleState.Collapsed)
+      );
   }
 }
 
 class TaskTreeItem extends vscode.TreeItem {
   constructor(
-    public readonly label: string,
-    public readonly priority: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly command?: vscode.Command
+    public readonly task: Task,
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState
   ) {
-    super(label, collapsibleState);
-    this.tooltip = `${this.label}-(${this.priority})`;
-    this.description = this.priority;
-    this.iconPath = this.getIconPath(priority);
+    super(task.description, collapsibleState);
+    this.tooltip = `${task.description} (${task.priority})`;
+    this.description = task.priority;
+    this.iconPath = this.getIconPath(task.priority);
+    this.contextValue = "task";
   }
 
   private getIconPath(priority: string): { light: string; dark: string } {
@@ -84,5 +110,25 @@ class TaskTreeItem extends vscode.TreeItem {
         iconName
       ).fsPath,
     };
+  }
+}
+
+class TaskNotesItem extends vscode.TreeItem {
+  constructor(public readonly task: Task) {
+    super("Notes", vscode.TreeItemCollapsibleState.None);
+    this.tooltip = "Click to edit notes";
+    this.description = this.truncateNotes(task.notes || "No notes");
+    this.contextValue = "taskNotes";
+    this.command = {
+      command: "codepin.editTaskNotes",
+      title: "Edit Notes",
+      arguments: [task],
+    };
+  }
+
+  private truncateNotes(notes: string, maxLength: number = 50): string {
+    return notes.length > maxLength
+      ? notes.substring(0, maxLength) + "..."
+      : notes;
   }
 }

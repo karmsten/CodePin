@@ -27,14 +27,18 @@ exports.updateTask = updateTask;
 const vscode = __importStar(require("vscode"));
 const taskStorage_1 = require("../utils/taskStorage");
 const decorations_1 = require("../utils/decorations");
-async function updateTask(context) {
+async function updateTask(context, taskToUpdate) {
     const tasks = (0, taskStorage_1.getTasks)(context);
-    const taskToUpdate = await vscode.window.showQuickPick(tasks.map((task) => `${task.description} (${task.priority})`), { placeHolder: "Select task to update" });
+    if (!taskToUpdate) {
+        const taskToUpdateString = await vscode.window.showQuickPick(tasks.map((task) => `${task.description} (${task.priority})`), { placeHolder: "Select task to update" });
+        if (taskToUpdateString) {
+            taskToUpdate = tasks.find((task) => `${task.description} (${task.priority})` === taskToUpdateString);
+        }
+    }
     if (taskToUpdate) {
-        const index = tasks.findIndex((task) => `${task.description} (${task.priority})` === taskToUpdate);
+        const index = tasks.findIndex((t) => t.id === taskToUpdate.id);
         if (index !== -1) {
-            const task = tasks[index];
-            const updatedTask = await getUpdatedTaskDetails(task);
+            const updatedTask = await getUpdatedTaskDetails(taskToUpdate);
             if (updatedTask) {
                 tasks[index] = updatedTask;
                 (0, taskStorage_1.saveTasks)(context, tasks);

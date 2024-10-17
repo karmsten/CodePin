@@ -3,10 +3,10 @@ import { createTask } from "./commands/createTask";
 import { deleteTask } from "./commands/deleteTask";
 import { updateTask } from "./commands/updateTask";
 import { showAllTasks } from "./commands/showAllTasks";
-import { loadTasks, getTasks } from "./utils/taskStorage";
+import { loadTasks, getTasks, saveTasks } from "./utils/taskStorage";
 import { updateDecorations } from "./utils/decorations";
 import { TaskTreeDataProvider } from "./taskTreeView";
-
+import { Task } from "./types";
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "codepin" is now active!');
 
@@ -58,12 +58,35 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  let editTaskNotesDisposable = vscode.commands.registerCommand(
+    "codepin.editTaskNotes",
+    async (task: Task) => {
+      const newNotes = await vscode.window.showInputBox({
+        prompt: "Edit task notes",
+        value: task.notes,
+        placeHolder: "Enter notes for this task",
+      });
+
+      if (newNotes !== undefined) {
+        task.notes = newNotes;
+        const tasks = getTasks(context);
+        const index = tasks.findIndex((t) => t.id === task.id);
+        if (index !== -1) {
+          tasks[index] = task;
+          saveTasks(context, tasks);
+          taskTreeDataProvider.refresh();
+        }
+      }
+    }
+  );
+
   context.subscriptions.push(
     createTaskDisposable,
     deleteTaskDisposable,
     updateTaskDisposable,
     showAllTasksDisposable,
-    jumpToTaskDisposable
+    jumpToTaskDisposable,
+    editTaskNotesDisposable
   );
 
   // Register CodeLens provider
