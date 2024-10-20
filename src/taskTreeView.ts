@@ -13,7 +13,9 @@ class AssigneeTreeItem extends vscode.TreeItem {
 
 export class TaskTreeDataProvider
   implements
-    vscode.TreeDataProvider<AssigneeTreeItem | TaskTreeItem | TaskNotesItem>
+    vscode.TreeDataProvider<
+      AssigneeTreeItem | TaskTreeItem | TaskNotesItem | TaskActionItem
+    >
 {
   private _onDidChangeTreeData: vscode.EventEmitter<
     AssigneeTreeItem | TaskTreeItem | TaskNotesItem | undefined | null | void
@@ -37,14 +39,19 @@ export class TaskTreeDataProvider
   }
 
   getChildren(
-    element?: AssigneeTreeItem | TaskTreeItem | TaskNotesItem
-  ): Thenable<(AssigneeTreeItem | TaskTreeItem | TaskNotesItem)[]> {
+    element?: AssigneeTreeItem | TaskTreeItem | TaskNotesItem | TaskActionItem
+  ): Thenable<
+    (AssigneeTreeItem | TaskTreeItem | TaskNotesItem | TaskActionItem)[]
+  > {
     if (!element) {
       return Promise.resolve(this.getAssignees());
     } else if (element instanceof AssigneeTreeItem) {
       return Promise.resolve(this.getTasksForAssignee(element.label));
     } else if (element instanceof TaskTreeItem) {
-      return Promise.resolve([new TaskNotesItem(element.task)]);
+      return Promise.resolve([
+        new TaskActionItem(element.task, "Jump to Task"),
+        new TaskNotesItem(element.task),
+      ]);
     } else {
       return Promise.resolve([]);
     }
@@ -75,41 +82,54 @@ export class TaskTreeDataProvider
   }
 }
 
+class TaskActionItem extends vscode.TreeItem {
+  constructor(public readonly task: Task, public readonly action: string) {
+    super(action, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "taskAction";
+
+    this.command = {
+      command: "codepin.jumpToTask",
+      title: "Jump to Task",
+      arguments: [task.id],
+    };
+  }
+}
+
 class TaskTreeItem extends vscode.TreeItem {
   constructor(
     public readonly task: Task,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState
+    public readonly collapsibleState: vscode.TreeItemCollapsibleState = vscode
+      .TreeItemCollapsibleState.Collapsed
   ) {
     super(task.description, collapsibleState);
-    this.tooltip = `${task.description} (${task.priority})`;
-    this.description = task.priority;
+    this.tooltip = `Priority: ${task.priority}\nAssignee: ${
+      task.assignee || "Unassigned"
+    }`;
+    this.description = `${task.priority} | ${task.assignee || "Unassigned"}`;
     this.iconPath = this.getIconPath(task.priority);
     this.contextValue = "task";
   }
 
-  private getIconPath(priority: string): { light: string; dark: string } {
-    const iconName =
-      priority === "high"
-        ? "red-circle.svg"
-        : priority === "medium"
-        ? "yellow-circle.svg"
-        : "green-circle.svg";
-    return {
-      light: vscode.Uri.joinPath(
-        vscode.Uri.file(__dirname),
-        "..",
-        "resources",
-        "light",
-        iconName
-      ).fsPath,
-      dark: vscode.Uri.joinPath(
-        vscode.Uri.file(__dirname),
-        "..",
-        "resources",
-        "dark",
-        iconName
-      ).fsPath,
-    };
+  private getIconPath(priority: string): vscode.ThemeIcon {
+    switch (priority) {
+      case "high":
+        return new vscode.ThemeIcon(
+          "circle-filled",
+          new vscode.ThemeColor("charts.red")
+        );
+      case "medium":
+        return new vscode.ThemeIcon(
+          "circle-filled",
+          new vscode.ThemeColor("charts.yellow")
+        );
+      case "low":
+        return new vscode.ThemeIcon(
+          "circle-filled",
+          new vscode.ThemeColor("charts.green")
+        );
+      default:
+        return new vscode.ThemeIcon("circle-outline");
+    }
   }
 }
 

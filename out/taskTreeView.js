@@ -56,7 +56,10 @@ class TaskTreeDataProvider {
             return Promise.resolve(this.getTasksForAssignee(element.label));
         }
         else if (element instanceof TaskTreeItem) {
-            return Promise.resolve([new TaskNotesItem(element.task)]);
+            return Promise.resolve([
+                new TaskActionItem(element.task, "Jump to Task"),
+                new TaskNotesItem(element.task),
+            ]);
         }
         else {
             return Promise.resolve([]);
@@ -75,28 +78,45 @@ class TaskTreeDataProvider {
     }
 }
 exports.TaskTreeDataProvider = TaskTreeDataProvider;
+class TaskActionItem extends vscode.TreeItem {
+    task;
+    action;
+    constructor(task, action) {
+        super(action, vscode.TreeItemCollapsibleState.None);
+        this.task = task;
+        this.action = action;
+        this.contextValue = "taskAction";
+        this.command = {
+            command: "codepin.jumpToTask",
+            title: "Jump to Task",
+            arguments: [task.id],
+        };
+    }
+}
 class TaskTreeItem extends vscode.TreeItem {
     task;
     collapsibleState;
-    constructor(task, collapsibleState) {
+    constructor(task, collapsibleState = vscode
+        .TreeItemCollapsibleState.Collapsed) {
         super(task.description, collapsibleState);
         this.task = task;
         this.collapsibleState = collapsibleState;
-        this.tooltip = `${task.description} (${task.priority})`;
-        this.description = task.priority;
+        this.tooltip = `Priority: ${task.priority}\nAssignee: ${task.assignee || "Unassigned"}`;
+        this.description = `${task.priority} | ${task.assignee || "Unassigned"}`;
         this.iconPath = this.getIconPath(task.priority);
         this.contextValue = "task";
     }
     getIconPath(priority) {
-        const iconName = priority === "high"
-            ? "red-circle.svg"
-            : priority === "medium"
-                ? "yellow-circle.svg"
-                : "green-circle.svg";
-        return {
-            light: vscode.Uri.joinPath(vscode.Uri.file(__dirname), "..", "resources", "light", iconName).fsPath,
-            dark: vscode.Uri.joinPath(vscode.Uri.file(__dirname), "..", "resources", "dark", iconName).fsPath,
-        };
+        switch (priority) {
+            case "high":
+                return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.red"));
+            case "medium":
+                return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.yellow"));
+            case "low":
+                return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"));
+            default:
+                return new vscode.ThemeIcon("circle-outline");
+        }
     }
 }
 class TaskNotesItem extends vscode.TreeItem {

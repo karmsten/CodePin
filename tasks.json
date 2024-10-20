@@ -22,6 +22,25 @@
     "priority": "low",
     "assignee": "",
     "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Home.tsx",
-    "lineNumber": 17
+    "lineNumber": 17,
+    "notes": "motherfucker hej hopp tjollalo"
+  },
+  {
+    "id": "1729449630583",
+    "description": "this is the description",
+    "priority": "low",
+    "assignee": "Fredrik",
+    "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Private.tsx",
+    "lineNumber": 2,
+    "notes": "this is the notes field mofo"
+  },
+  {
+    "id": "1729450166086",
+    "description": "find a way to improve this useEffect",
+    "priority": "medium",
+    "assignee": "Fredrik",
+    "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Private.tsx",
+    "lineNumber": 28,
+    "notes": "theres ways to improve this useeffect by using other shit like blam blam bigidibam or be stupid mofo"
   }
 ]

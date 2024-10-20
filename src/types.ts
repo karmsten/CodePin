@@ -1,9 +1,9 @@
 export interface Task {
   id: string;
   description: string;
-  assignee?: string;
   priority: "low" | "medium" | "high";
+  assignee?: string;
   filePath: string;
   lineNumber: number;
-  notes: string;
+  notes?: string;
 }

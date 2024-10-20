@@ -55,12 +55,18 @@ async function getUpdatedTaskDetails(task: Task): Promise<Task | undefined> {
     value: task.assignee,
   });
 
+  const newNotes = await vscode.window.showInputBox({
+    prompt: "Enter new notes (optional)",
+    value: task.notes,
+  });
+
   if (newDescription && newPriority) {
     return {
       ...task,
       description: newDescription,
       priority: newPriority as "low" | "medium" | "high",
       assignee: newAssignee,
+      notes: newNotes,
     };
   }
   return undefined;

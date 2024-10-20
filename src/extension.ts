@@ -7,6 +7,7 @@ import { loadTasks, getTasks, saveTasks } from "./utils/taskStorage";
 import { updateDecorations } from "./utils/decorations";
 import { TaskTreeDataProvider } from "./taskTreeView";
 import { Task } from "./types";
+
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "codepin" is now active!');
 
@@ -95,7 +96,23 @@ export function activate(context: vscode.ExtensionContext) {
     new CodePinCodeLensProvider(context)
   );
 
-  context.subscriptions.push(codeLensProviderDisposable);
+  let showTaskDetailsDisposable = vscode.commands.registerCommand(
+    "codepin.showTaskDetails",
+    (task: Task) => {
+      const message = [
+        `Assignee: ${task.assignee || "Unassigned"}`,
+        `Priority: ${task.priority}`,
+        `Task: ${task.description}`,
+        task.notes ? `Notes: ${task.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      vscode.window.showInformationMessage(message, { detail: message });
+    }
+  );
+
+  context.subscriptions.push(showTaskDetailsDisposable);
 
   // Update decorations when the active editor changes
   vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -105,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 
-class CodePinCodeLensProvider implements vscode.CodeLensProvider {
+/* class CodePinCodeLensProvider implements vscode.CodeLensProvider {
   private context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
@@ -146,6 +163,72 @@ class CodePinCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     return codeLenses;
+  }
+} */
+
+class CodePinCodeLensProvider implements vscode.CodeLensProvider {
+  private context: vscode.ExtensionContext;
+
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+  }
+
+  provideCodeLenses(
+    document: vscode.TextDocument,
+    token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.CodeLens[]> {
+    const codeLenses: vscode.CodeLens[] = [];
+
+    // Add a CodeLens at the top of the file to create a new task
+    const topOfDocument = new vscode.Range(0, 0, 0, 0);
+    const createTaskCodeLens = new vscode.CodeLens(topOfDocument, {
+      title: "Create Task",
+      command: "codepin.createTask",
+    });
+    codeLenses.push(createTaskCodeLens);
+
+    // Add CodeLenses for existing tasks in this file
+    const tasks = getTasks(this.context);
+    const fileTasks = tasks.filter(
+      (task) => task.filePath === document.uri.fsPath
+    );
+
+    for (const task of fileTasks) {
+      const taskRange = new vscode.Range(
+        task.lineNumber,
+        0,
+        task.lineNumber,
+        0
+      );
+      const taskCodeLens = new vscode.CodeLens(taskRange, {
+        title: this.getTaskTitle(task),
+        command: "codepin.showTaskDetails",
+        arguments: [task],
+      });
+      codeLenses.push(taskCodeLens);
+    }
+
+    return codeLenses;
+  }
+  private getTaskTitle(task: Task): string {
+    const assignee = task.assignee || "Unassigned";
+    const priorityIcon = this.getPriorityIcon(task.priority);
+    const truncatedDescription =
+      task.description.length > 30
+        ? task.description.substring(0, 27) + "..."
+        : task.description;
+    return `${priorityIcon} ${truncatedDescription} (${assignee})`;
+  }
+
+  private getPriorityIcon(priority: "low" | "medium" | "high"): string {
+    switch (priority) {
+      case "low":
+        return "🟢"; // Green circle for low priority
+      case "medium":
+        return "🟠"; // Orange circle for medium priority
+      case "high":
+        return "🔴"; // Red circle for high priority
+    }
   }
 }
 
