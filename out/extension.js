@@ -26,6 +26,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
+/* import { Octokit } from "@octokit/rest"; */
 const createTask_1 = require("./commands/createTask");
 const deleteTask_1 = require("./commands/deleteTask");
 const updateTask_1 = require("./commands/updateTask");
@@ -33,13 +34,26 @@ const showAllTasks_1 = require("./commands/showAllTasks");
 const taskStorage_1 = require("./utils/taskStorage");
 const decorations_1 = require("./utils/decorations");
 const taskTreeView_1 = require("./taskTreeView");
-function activate(context) {
+let octokit;
+async function activate(context) {
     console.log('Congratulations, your extension "codepin" is now active!');
+    try {
+        const session = await vscode.authentication.getSession("github", ["repo"], {
+            createIfNone: true,
+        });
+        const { Octokit } = await import("@octokit/rest");
+        octokit = new Octokit({ auth: session.accessToken });
+        vscode.window.showInformationMessage("Successfully authenticated with GitHub");
+    }
+    catch (error) {
+        vscode.window.showErrorMessage("Failed to authenticate with GitHub");
+        console.error(error);
+    }
     (0, taskStorage_1.loadTasks)(context);
     const taskTreeDataProvider = new taskTreeView_1.TaskTreeDataProvider(context);
     vscode.window.registerTreeDataProvider("codepinTasks", taskTreeDataProvider);
     let createTaskDisposable = vscode.commands.registerCommand("codepin.createTask", async () => {
-        await (0, createTask_1.createTask)(context);
+        await (0, createTask_1.createTask)(context, octokit);
         taskTreeDataProvider.refresh();
     });
     let deleteTaskDisposable = vscode.commands.registerCommand("codepin.deleteTask", async () => {
@@ -85,16 +99,30 @@ function activate(context) {
     // Register CodeLens provider
     let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ scheme: "file", language: "*" }, new CodePinCodeLensProvider(context));
     let showTaskDetailsDisposable = vscode.commands.registerCommand("codepin.showTaskDetails", (task) => {
-        const message = [
-            `Assignee: ${task.assignee || "Unassigned"}`,
+        const priorityIcon = getPriorityIcon(task.priority);
+        const mainMessage = `${priorityIcon} ${task.description} (${task.assignee || "Unassigned"})`;
+        const detailMessage = [
             `Priority: ${task.priority}`,
+            `Assignee: ${task.assignee || "Unassigned"}`,
             `Task: ${task.description}`,
             task.notes ? `Notes: ${task.notes}` : null,
         ]
             .filter(Boolean)
             .join("\n\n");
-        vscode.window.showInformationMessage(message, { detail: message });
+        vscode.window.showInformationMessage(mainMessage, {
+            detail: detailMessage,
+        });
     });
+    function getPriorityIcon(priority) {
+        switch (priority) {
+            case "low":
+                return "🟢";
+            case "medium":
+                return "🟠";
+            case "high":
+                return "🔴";
+        }
+    }
     context.subscriptions.push(showTaskDetailsDisposable);
     // Update decorations when the active editor changes
     vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -103,49 +131,6 @@ function activate(context) {
         }
     });
 }
-/* class CodePinCodeLensProvider implements vscode.CodeLensProvider {
-  private context: vscode.ExtensionContext;
-
-  constructor(context: vscode.ExtensionContext) {
-    this.context = context;
-  }
-
-  provideCodeLenses(
-    document: vscode.TextDocument,
-    token: vscode.CancellationToken
-  ): vscode.ProviderResult<vscode.CodeLens[]> {
-    const codeLenses: vscode.CodeLens[] = [];
-
-    // Add a CodeLens at the top of the file to create a new task
-    const topOfDocument = new vscode.Range(0, 0, 0, 0);
-    const createTaskCodeLens = new vscode.CodeLens(topOfDocument, {
-      title: "Create Task",
-      command: "codepin.createTask",
-    });
-    codeLenses.push(createTaskCodeLens);
-
-    // Add CodeLenses for existing tasks in this file
-    const tasks = getTasks(this.context);
-    const fileTasks = tasks.filter(
-      (task) => task.filePath === document.uri.fsPath
-    );
-    for (const task of fileTasks) {
-      const taskRange = new vscode.Range(
-        task.lineNumber,
-        0,
-        task.lineNumber,
-        0
-      );
-      const taskCodeLens = new vscode.CodeLens(taskRange, {
-        title: `📌 ${task.description} (${task.priority})`,
-        command: "codepin.updateTask",
-      });
-      codeLenses.push(taskCodeLens);
-    }
-
-    return codeLenses;
-  }
-} */
 class CodePinCodeLensProvider {
     context;
     constructor(context) {

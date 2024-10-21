@@ -27,7 +27,7 @@ exports.createTask = createTask;
 const vscode = __importStar(require("vscode"));
 const taskStorage_1 = require("../utils/taskStorage");
 const decorations_1 = require("../utils/decorations");
-async function createTask(context) {
+async function createTask(context, octokit) {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
         const position = editor.selection.active;
@@ -35,15 +35,14 @@ async function createTask(context) {
             prompt: "Enter task description",
         });
         const priority = await vscode.window.showQuickPick(["low", "medium", "high"], { placeHolder: "Select priority" });
-        const assignee = await vscode.window.showInputBox({
-            prompt: "Assign to (optional)",
-        });
+        const collaborators = await getCollaborators(octokit);
+        const assignee = await vscode.window.showQuickPick(["Unassigned", ...collaborators], { placeHolder: "Assign to" });
         if (description && priority) {
             const task = {
                 id: Date.now().toString(),
                 description,
                 priority: priority,
-                assignee,
+                assignee: assignee === "Unassigned" ? undefined : assignee,
                 filePath: editor.document.uri.fsPath,
                 lineNumber: position.line,
                 notes: "",
@@ -54,6 +53,34 @@ async function createTask(context) {
             (0, decorations_1.updateDecorations)(editor, tasks);
             vscode.window.showInformationMessage(`Task created: ${description}`);
         }
+    }
+}
+async function getCollaborators(octokit) {
+    try {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) {
+            throw new Error("No workspace folder open");
+        }
+        const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports;
+        const git = gitExtension.getAPI(1);
+        const repository = git.repositories[0];
+        if (!repository) {
+            throw new Error("No git repository found");
+        }
+        const remoteUrl = repository.state.remotes[0].fetchUrl || "";
+        const [owner, repo] = remoteUrl
+            .split("/")
+            .slice(-2)
+            .map((part) => part.replace(".git", ""));
+        const { data: collaborators } = await octokit.repos.listCollaborators({
+            owner,
+            repo,
+        });
+        return collaborators.map((collaborator) => collaborator.login);
+    }
+    catch (error) {
+        console.error("Failed to fetch collaborators", error);
+        return [];
     }
 }
 //# sourceMappingURL=createTask.js.map
