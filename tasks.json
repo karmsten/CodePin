@@ -42,5 +42,21 @@
     "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Private.tsx",
     "lineNumber": 28,
     "notes": "theres ways to improve this useeffect by using other shit like blam blam bigidibam or be stupid mofo"
+  },
+  {
+    "id": "1730315580787",
+    "description": "This is a task description that is pretty long just to see how much shit if any will be cut out and if this exeeds then it most defo needs to be cut ",
+    "priority": "medium",
+    "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Private.tsx",
+    "lineNumber": 24,
+    "notes": "här ska jag kunna skriva hur mycket som helst egentligen men det skulle vara rätt så najs att kunna lägga ner detta textfältet inne på tasktreeviewn istället"
+  },
+  {
+    "id": "1730316465513",
+    "description": "se till och refactora härifrån och nertill",
+    "priority": "low",
+    "filePath": "c:\\cleanup from desktop\\VS programs\\Z\\improved-potato\\client\\src\\Private.tsx",
+    "lineNumber": 4,
+    "notes": "är du bög?"
   }
 ]

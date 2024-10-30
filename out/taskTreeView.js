@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TaskTreeDataProvider = void 0;
+exports.TaskNotesItem = exports.TaskTreeDataProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const taskStorage_1 = require("./utils/taskStorage");
 class AssigneeTreeItem extends vscode.TreeItem {
@@ -33,6 +33,11 @@ class AssigneeTreeItem extends vscode.TreeItem {
         super(label, collapsibleState);
         this.label = label;
         this.collapsibleState = collapsibleState;
+        this.contextValue = "assigneeSection";
+        this.iconPath = new vscode.ThemeIcon("symbol-folder");
+        // Add native VS Code styling
+        this.resourceUri = vscode.Uri.parse(`assignee-${label}`);
+        this.tooltip = new vscode.MarkdownString(`**${label}**\nClick to expand/collapse`);
     }
 }
 class TaskTreeDataProvider {
@@ -86,6 +91,11 @@ class TaskActionItem extends vscode.TreeItem {
         this.task = task;
         this.action = action;
         this.contextValue = "taskAction";
+        // Enhanced button styling using VS Code's native theming
+        this.iconPath = new vscode.ThemeIcon("play", new vscode.ThemeColor("button.background"));
+        this.tooltip = "Click to jump to task location";
+        this.description = "$(arrow-right)";
+        // Add command
         this.command = {
             command: "codepin.jumpToTask",
             title: "Jump to Task",
@@ -124,19 +134,38 @@ class TaskNotesItem extends vscode.TreeItem {
     constructor(task) {
         super("Notes", vscode.TreeItemCollapsibleState.None);
         this.task = task;
-        this.tooltip = "Click to edit notes";
-        this.description = this.truncateNotes(task.notes || "No notes");
         this.contextValue = "taskNotes";
+        // Show the notes or a placeholder
+        this.description = task.notes || "Click to add notes...";
+        // Add edit button icon
+        this.iconPath = new vscode.ThemeIcon("edit");
+        // Create a command that will show the inline editor
         this.command = {
-            command: "codepin.editTaskNotes",
+            command: "codepin.showInlineNotesEditor",
             title: "Edit Notes",
-            arguments: [task],
+            arguments: [this],
         };
     }
-    truncateNotes(notes, maxLength = 50) {
-        return notes.length > maxLength
-            ? notes.substring(0, maxLength) + "..."
-            : notes;
-    }
 }
+exports.TaskNotesItem = TaskNotesItem;
+//not in use
+/*class TaskNotesItem extends vscode.TreeItem {
+  constructor(public readonly task: Task) {
+    super("Notes", vscode.TreeItemCollapsibleState.None);
+    this.tooltip = "Click to edit notes";
+    this.description = this.truncateNotes(task.notes || "No notes");
+    this.contextValue = "taskNotes";
+    this.command = {
+      command: "codepin.editTaskNotes",
+      title: "Edit Notes",
+      arguments: [task],
+    };
+  }
+
+   private truncateNotes(notes: string, maxLength: number = 50): string {
+    return notes.length > maxLength
+      ? notes.substring(0, maxLength) + "..."
+      : notes;
+  }
+} */
 //# sourceMappingURL=taskTreeView.js.map

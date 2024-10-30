@@ -8,6 +8,14 @@ class AssigneeTreeItem extends vscode.TreeItem {
     public readonly collapsibleState: vscode.TreeItemCollapsibleState
   ) {
     super(label, collapsibleState);
+    this.contextValue = "assigneeSection";
+    this.iconPath = new vscode.ThemeIcon("symbol-folder");
+
+    // Add native VS Code styling
+    this.resourceUri = vscode.Uri.parse(`assignee-${label}`);
+    this.tooltip = new vscode.MarkdownString(
+      `**${label}**\nClick to expand/collapse`
+    );
   }
 }
 
@@ -87,6 +95,15 @@ class TaskActionItem extends vscode.TreeItem {
     super(action, vscode.TreeItemCollapsibleState.None);
     this.contextValue = "taskAction";
 
+    // Enhanced button styling using VS Code's native theming
+    this.iconPath = new vscode.ThemeIcon(
+      "play",
+      new vscode.ThemeColor("button.background")
+    );
+    this.tooltip = "Click to jump to task location";
+    this.description = "$(arrow-right)";
+
+    // Add command
     this.command = {
       command: "codepin.jumpToTask",
       title: "Jump to Task",
@@ -133,7 +150,28 @@ class TaskTreeItem extends vscode.TreeItem {
   }
 }
 
-class TaskNotesItem extends vscode.TreeItem {
+export class TaskNotesItem extends vscode.TreeItem {
+  constructor(public readonly task: Task) {
+    super("Notes", vscode.TreeItemCollapsibleState.None);
+    this.contextValue = "taskNotes";
+
+    // Show the notes or a placeholder
+    this.description = task.notes || "Click to add notes...";
+
+    // Add edit button icon
+    this.iconPath = new vscode.ThemeIcon("edit");
+
+    // Create a command that will show the inline editor
+    this.command = {
+      command: "codepin.showInlineNotesEditor",
+      title: "Edit Notes",
+      arguments: [this],
+    };
+  }
+}
+
+//not in use
+/*class TaskNotesItem extends vscode.TreeItem {
   constructor(public readonly task: Task) {
     super("Notes", vscode.TreeItemCollapsibleState.None);
     this.tooltip = "Click to edit notes";
@@ -146,9 +184,9 @@ class TaskNotesItem extends vscode.TreeItem {
     };
   }
 
-  private truncateNotes(notes: string, maxLength: number = 50): string {
+   private truncateNotes(notes: string, maxLength: number = 50): string {
     return notes.length > maxLength
       ? notes.substring(0, maxLength) + "..."
       : notes;
   }
-}
+} */

@@ -39,6 +39,11 @@
         "command": "codepin.editTaskNotes",
         "title": "CodePin: Edit Task Notes",
         "category": "CodePin"
+      },
+      {
+        "command": "codepin.showInlineNotesEditor",
+        "title": "CodePin: Edit Notes Inline",
+        "category": "CodePin"
       }
     ],
     "menus": {
@@ -65,7 +70,25 @@
           "name": "Tasks"
         }
       ]
-    }
+    },
+    "colors": [
+      {
+        "id": "codepin.sectionBorder",
+        "description": "Color for the section borders in CodePin",
+        "defaults": {
+          "dark": "#ffffff20",
+          "light": "#00000020"
+        }
+      },
+      {
+        "id": "codepin.taskAction.background",
+        "description": "Background color for task actions",
+        "defaults": {
+          "dark": "#0366d6",
+          "light": "#0366d6"
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -88,6 +111,6 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@octokit/rest": "^19.0.7"
+    "@octokit/rest": "^21.0.2"
   }
 }

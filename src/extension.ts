@@ -6,7 +6,7 @@ import { updateTask } from "./commands/updateTask";
 import { showAllTasks } from "./commands/showAllTasks";
 import { loadTasks, getTasks, saveTasks } from "./utils/taskStorage";
 import { updateDecorations } from "./utils/decorations";
-import { TaskTreeDataProvider } from "./taskTreeView";
+import { TaskTreeDataProvider, TaskNotesItem } from "./taskTreeView";
 import { Task } from "./types";
 
 let octokit: any;
@@ -98,13 +98,47 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  let showInlineNotesEditorDisposable = vscode.commands.registerCommand(
+    "codepin.showInlineNotesEditor",
+    async (treeItem: TaskNotesItem) => {
+      const options: vscode.InputBoxOptions = {
+        prompt: "Edit notes",
+        value: treeItem.task.notes || "",
+        placeHolder: "Enter notes for this task",
+        // Show the input box right where the tree item is
+        ignoreFocusOut: true,
+      };
+
+      // Create a new input box at the tree item's location
+      const newNotes = await vscode.window.createInputBox();
+      Object.assign(newNotes, options);
+
+      newNotes.onDidAccept(async () => {
+        const tasks = getTasks(context);
+        const taskIndex = tasks.findIndex((t) => t.id === treeItem.task.id);
+        if (taskIndex !== -1) {
+          tasks[taskIndex] = {
+            ...tasks[taskIndex],
+            notes: newNotes.value,
+          };
+          saveTasks(context, tasks);
+          taskTreeDataProvider.refresh();
+        }
+        newNotes.hide();
+      });
+
+      newNotes.show();
+    }
+  );
+
   context.subscriptions.push(
     createTaskDisposable,
     deleteTaskDisposable,
     updateTaskDisposable,
     showAllTasksDisposable,
     jumpToTaskDisposable,
-    editTaskNotesDisposable
+    editTaskNotesDisposable,
+    showInlineNotesEditorDisposable
   );
 
   // Register CodeLens provider

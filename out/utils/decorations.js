@@ -26,20 +26,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateDecorations = updateDecorations;
 const vscode = __importStar(require("vscode"));
 function updateDecorations(editor, tasks) {
-    const fileUri = editor.document.uri;
-    const fileTasks = tasks.filter((task) => task.filePath === fileUri.fsPath);
-    const decorations = fileTasks.map((task) => ({
-        range: new vscode.Range(task.lineNumber, 0, task.lineNumber, 0),
-        renderOptions: {
-            after: {
-                contentText: `📌 ${task.description}`,
-                color: getColorForPriority(task.priority),
-            },
-        },
-    }));
     const decorationType = vscode.window.createTextEditorDecorationType({});
-    editor.setDecorations(decorationType, decorations);
+    editor.setDecorations(decorationType, []);
 }
+//not in use
 function getColorForPriority(priority) {
     switch (priority) {
         case "low":

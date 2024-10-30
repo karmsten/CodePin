@@ -95,7 +95,33 @@ async function activate(context) {
             }
         }
     });
-    context.subscriptions.push(createTaskDisposable, deleteTaskDisposable, updateTaskDisposable, showAllTasksDisposable, jumpToTaskDisposable, editTaskNotesDisposable);
+    let showInlineNotesEditorDisposable = vscode.commands.registerCommand("codepin.showInlineNotesEditor", async (treeItem) => {
+        const options = {
+            prompt: "Edit notes",
+            value: treeItem.task.notes || "",
+            placeHolder: "Enter notes for this task",
+            // Show the input box right where the tree item is
+            ignoreFocusOut: true,
+        };
+        // Create a new input box at the tree item's location
+        const newNotes = await vscode.window.createInputBox();
+        Object.assign(newNotes, options);
+        newNotes.onDidAccept(async () => {
+            const tasks = (0, taskStorage_1.getTasks)(context);
+            const taskIndex = tasks.findIndex((t) => t.id === treeItem.task.id);
+            if (taskIndex !== -1) {
+                tasks[taskIndex] = {
+                    ...tasks[taskIndex],
+                    notes: newNotes.value,
+                };
+                (0, taskStorage_1.saveTasks)(context, tasks);
+                taskTreeDataProvider.refresh();
+            }
+            newNotes.hide();
+        });
+        newNotes.show();
+    });
+    context.subscriptions.push(createTaskDisposable, deleteTaskDisposable, updateTaskDisposable, showAllTasksDisposable, jumpToTaskDisposable, editTaskNotesDisposable, showInlineNotesEditorDisposable);
     // Register CodeLens provider
     let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ scheme: "file", language: "*" }, new CodePinCodeLensProvider(context));
     let showTaskDetailsDisposable = vscode.commands.registerCommand("codepin.showTaskDetails", (task) => {

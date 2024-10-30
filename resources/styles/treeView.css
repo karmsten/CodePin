@@ -1,0 +1,13 @@
+.customview-tree .assigneeSection {
+  border-left: 1px solid var(--vscode-codepin-sectionBorder);
+  margin-left: 1px;
+  padding-left: 4px;
+}
+
+.customview-tree .taskAction {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin: 2px 0;
+}
